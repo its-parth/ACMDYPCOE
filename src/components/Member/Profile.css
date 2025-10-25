@@ -1,0 +1,236 @@
+.profile-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  max-width: 1000px;
+}
+
+.profile-card {
+  height: fit-content;
+}
+
+.profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding-bottom: 24px;
+  border-bottom: 2px solid var(--bg-secondary);
+}
+
+.profile-photo-large {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 20px;
+  border: 4px solid var(--bg-secondary);
+  box-shadow: var(--shadow-md);
+}
+
+.profile-info-header h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.profile-details {
+  margin-top: 24px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.detail-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.id-card-container h3 {
+  margin-bottom: 20px;
+}
+
+.id-card {
+  background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 8px 32px rgba(0, 102, 204, 0.3);
+  color: white;
+}
+
+.id-card-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.id-card-logo {
+  background: white;
+  border-radius: 12px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.id-card-title h4 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 2px;
+  letter-spacing: 1px;
+}
+
+.id-card-title p {
+  font-size: 12px;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.id-card-body {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.id-card-photo-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.id-card-photo {
+  width: 100px;
+  height: 100px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 3px solid white;
+  box-shadow: var(--shadow-md);
+}
+
+.id-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.id-detail {
+  display: flex;
+  flex-direction: column;
+}
+
+.id-label {
+  font-size: 11px;
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.id-value {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.id-number {
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+  font-size: 18px;
+}
+
+.id-card-footer {
+  padding-top: 16px;
+  border-top: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.id-card-barcode {
+  background: white;
+  border-radius: 8px;
+  padding: 8px;
+  margin-bottom: 12px;
+}
+
+.id-card-note {
+  font-size: 10px;
+  color: var(--text-light);
+  text-align: center;
+  margin-top: 8px;
+}
+
+.edit-profile-form {
+  padding: 24px;
+}
+
+.alert {
+  padding: 16px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.alert-success {
+  background: #d4edda;
+  color: #155724;
+  border: 2px solid #c3e6cb;
+}
+
+@media (max-width: 968px) {
+  .profile-container {
+    grid-template-columns: 1fr;
+  }
+
+  .id-card-body {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .id-card-photo-section {
+    justify-content: center;
+  }
+
+  .id-card-details {
+    align-items: center;
+  }
+
+  .id-detail {
+    align-items: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-photo-large {
+    width: 120px;
+    height: 120px;
+  }
+
+  .id-card {
+    padding: 20px;
+  }
+
+  .id-card-photo {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Add styles for max-width: 768px here */
+}
