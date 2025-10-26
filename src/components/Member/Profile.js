@@ -201,34 +201,33 @@ const Profile = () => {
                   />
                 </div>
 
-                <div className="input-group">
-                  <label htmlFor="profilePhoto">Profile Photo URL</label>
-                  <input
-                    type="url"
-                    id="profilePhoto"
-                    name="profilePhoto"
-                    value={formData.profilePhoto}
-                    onChange={handleInputChange}
-                    placeholder="https://example.com/photo.jpg"
-                  />
-                  <small style={{color: 'var(--text-light)', fontSize: '13px', marginTop: '4px', display: 'block'}}>
-                    Leave empty to use default avatar
-                  </small>
-                </div>
 
-                {formData.profilePhoto && (
-                  <div style={{marginTop: '16px', marginBottom: '16px'}}>
-                    <label style={{display: 'block', marginBottom: '8px', fontWeight: '600'}}>Preview:</label>
-                    <img 
-                      src={formData.profilePhoto} 
-                      alt="Preview"
-                      style={{width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--border-color)'}}
-                      onError={(e) => {
-                        e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(formData.name) + '&size=100&background=0066cc&color=fff';
-                      }}
-                    />
-                  </div>
-                )}
+                <div className="input-group">
+              <label>Profile Photo</label>
+
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <img
+                  src={formData.profilePhoto}
+                  alt="preview"
+                  style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border-color)' }}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(formData.name || 'User') + '&size=100&background=0066cc&color=fff';
+                  }}
+                />
+
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
+                    📤 Upload
+                    <input type="file" accept="image/*" onChange={handleInputFileChange} style={{ display: 'none' }} />
+                  </label>
+
+                </div>
+              </div>
+
+              <small style={{ color: 'var(--text-light)' }}>You can upload a new photo or pick one from the gallery.</small>
+              {uploading && <div style={{ marginTop: 8 }}>Uploading…</div>}
+            </div>
 
                 <div style={{display: 'flex', gap: '12px', marginTop: '24px'}}>
                   <button type="submit" className="btn btn-primary" disabled={loading}>
