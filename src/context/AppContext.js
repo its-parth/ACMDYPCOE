@@ -340,6 +340,7 @@ export const AppProvider = ({ children }) => {
       const token = data.token;
       // backend returns role and name in your auth route — store a minimal user object
       const user = {
+        id: data.id,
         name: data.name || email.split('@')[0],
         email,
         role: data.role || role,
@@ -512,7 +513,8 @@ export const AppProvider = ({ children }) => {
   const updateCurrentUser = (updatedData) => {
     setCurrentUser({
       ...currentUser,
-      ...updatedData
+      ...updatedData,
+      profilePhoto: updatedData.profileImgUrl,
     });
   };
 

@@ -4,6 +4,7 @@ const authRoutes = require('./routes/auth');
 const protectedRoutes = require('./routes/protected');
 const uploadRoutes = require('./routes/upload');
 const cors = require('cors');
+const usersRoutes = require('./routes/users');
 require('dotenv').config();
 
 // app.use(cors({ origin: 'http://localhost:3000' }));
@@ -22,6 +23,7 @@ mongoose.connect(process.env.DATABASE_URL, {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/protected', protectedRoutes);
+app.use('/api/users', usersRoutes);
 // ...after express app created...
 // mouting request for cloudinary - step 1
 app.use('/api/upload', uploadRoutes);

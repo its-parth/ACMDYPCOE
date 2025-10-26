@@ -31,7 +31,7 @@ router.post('/login', async (req, res) => {
     JWT_SECRET,
     { expiresIn: '1h' }
   );
-  res.json({ token, role: user.role, name: user.name, position: user.position, MemberId: user.memberId, year: user.enrollmentYear, profileImgUrl: user.profileImgUrl, isPastMember: user.isPastMember});
+  res.json({ id: user._id, token, role: user.role, name: user.name, position: user.position, MemberId: user.memberId, year: user.enrollmentYear, profileImgUrl: user.profileImgUrl, isPastMember: user.isPastMember});
 });
 
 // Forgot Password
