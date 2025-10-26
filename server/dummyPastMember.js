@@ -41,6 +41,7 @@ mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
       user.role = 'member';
       user.isPastMember = true;
       user.profileImgUrl = `https://i.pravatar.cc/150?img=${memberCount}`;
+      memberCount++;
     });
 
     const allUsers = [...pastMembers];
