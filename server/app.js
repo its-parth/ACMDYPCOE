@@ -6,6 +6,7 @@ const uploadRoutes = require('./routes/upload');
 const cors = require('cors');
 const usersRoutes = require('./routes/users');
 require('dotenv').config();
+const membersRoutes = require('./routes/members');
 
 // app.use(cors({ origin: 'http://localhost:3000' }));
 
@@ -19,7 +20,11 @@ mongoose.connect(process.env.DATABASE_URL, {
   useUnifiedTopology: true
 }).then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err));
+// ...existing code...
 
+// after other app.use(...) calls:
+app.use('/api/members', membersRoutes);
+// ...existing code...
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/protected', protectedRoutes);
