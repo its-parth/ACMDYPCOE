@@ -28,7 +28,7 @@ function AppRoutes() {
     <Routes>
       <Route 
         path="/login" 
-        element={currentUser ? <Navigate to={currentUser.role === 'admin' ? '/admin' : '/member'} replace /> : <Login />} 
+        element={currentUser ? <Navigate to={currentUser.role === 'admin' ? '/admin' : '/member'} replace /> : <Login />}  
       />
       <Route
         path="/admin/*"

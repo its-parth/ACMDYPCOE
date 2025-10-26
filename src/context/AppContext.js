@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 
 const AppContext = createContext();
 
@@ -22,6 +22,7 @@ export const AppProvider = ({ children }) => {
       date: '2025-10-20',
       image: null
     },
+    
     {
       id: 2,
       title: 'Hackathon 2025',
@@ -303,34 +304,70 @@ export const AppProvider = ({ children }) => {
     }
   ]);
 
-  // Auth functions
-  const login = (email, password, role) => {
-    // Mock login - in real app, this would validate against backend
-    if (role === 'admin') {
-      setCurrentUser({
-        id: 'admin',
-        name: 'Admin User',
-        email: email,
-        role: 'admin',
-        profilePhoto: 'https://ui-avatars.com/api/?name=Admin+User&background=0066cc&color=fff&size=200'
-      });
-      return true;
-    } else {
-      // Find member and login
-      const member = currentMembers.find(m => m.email === email);
-      if (member) {
-        setCurrentUser({
-          ...member,
-          role: 'member'
-        });
-        return true;
+  // Backend API base
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  const TOKEN_KEY = 'acm_token';
+  const USER_KEY = 'acm_user';
+
+  // Restore user from localStorage on load
+  useEffect(() => {
+    try {
+      const token = localStorage.getItem(TOKEN_KEY);
+      const user = JSON.parse(localStorage.getItem(USER_KEY) || 'null');
+      if (token && user) {
+        setCurrentUser(user);
       }
+    } catch (err) {
+      console.warn('Failed to restore auth from storage', err);
     }
-    return false;
+  }, []); 
+
+  // Auth functions
+  const login = async (email, password, role = 'member') => {
+    try {
+      console.log('Logging in with', email, password, role);
+      const res = await fetch(`${API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, role })
+      });
+      const data = await res.json();
+      console.log("data: ", data);
+      if (!res.ok) {
+        return { ok: false, error: data.error || 'Login failed' };
+      }
+
+      const token = data.token;
+      // backend returns role and name in your auth route — store a minimal user object
+      const user = {
+        name: data.name || email.split('@')[0],
+        email,
+        role: data.role || role,
+        profilePhoto: data.profileImgUrl || '',
+        position: data.position || '',
+        memberId: data.MemberId || '',
+        year: data.year || ''
+      };
+
+      localStorage.setItem(TOKEN_KEY, token);
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+      setCurrentUser(user);
+
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: err.message || 'Network error' };
+    }
   };
 
   const logout = () => {
     setCurrentUser(null);
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+  };
+
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    return token ? { Authorization: `Bearer ${token}` } : {};
   };
 
   // Notification CRUD
@@ -505,7 +542,8 @@ export const AppProvider = ({ children }) => {
     addGalleryItem,
     updateGalleryItem,
     deleteGalleryItem,
-    activityLogs
+    activityLogs,
+    getAuthHeaders, // exposed for future API calls
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

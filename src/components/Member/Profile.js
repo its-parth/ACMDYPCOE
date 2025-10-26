@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+// ...existing code...
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import './Profile.css';
 
 const Profile = () => {
-  const { currentUser, updateCurrentUser } = useApp();
+  const { currentUser, updateCurrentUser, getAuthHeaders, galleryItems } = useApp();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: currentUser?.name || '',
@@ -11,6 +12,66 @@ const Profile = () => {
     profilePhoto: currentUser?.profilePhoto || ''
   });
   const [updateSuccess, setUpdateSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // UI state for gallery / upload
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    setFormData({
+      name: currentUser?.name || '',
+      email: currentUser?.email || '',
+      profilePhoto: currentUser?.profilePhoto || ''
+    });
+  }, [currentUser]);
+
+  // upload file to backend -> backend uploads to Cloudinary and returns url
+  const handleFileUpload = async (file) => {
+    if (!file) return;
+    try {
+      setUploading(true);
+      const fd = new FormData();
+      fd.append('image', file);
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: {
+          // keep auth header if your upload route requires auth
+          ...getAuthHeaders()
+        },
+        body: fd
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Upload failed');
+      }
+
+      const data = await res.json();
+      // set uploaded image url into form
+      setFormData(prev => ({ ...prev, profilePhoto: data.url }));
+    } catch (err) {
+      console.error('Upload error:', err);
+      alert('Image upload failed: ' + (err.message || ''));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSelectGalleryImage = (item) => {
+    // gallery item shape used elsewhere is { url, ... } — adjust if different
+    setFormData(prev => ({ ...prev, profilePhoto: item.url || item }));
+    setIsGalleryOpen(false);
+  };
+
+  const handleInputFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+  };
 
   const handleInputChange = (e) => {
     setFormData({
@@ -19,22 +80,47 @@ const Profile = () => {
     });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    if (!formData.name || !formData.email) {
-      alert('Name and email are required');
-      return;
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError(null);
+
+  try {
+    const res = await fetch('/api/users/update', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify(formData)
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Failed to update profile');
     }
 
-    updateCurrentUser(formData);
+    const updated = await res.json();
+    updateCurrentUser(updated);
     setIsEditing(false);
     setUpdateSuccess(true);
-    
-    setTimeout(() => {
-      setUpdateSuccess(false);
-    }, 3000);
-  };
+
+    setFormData({
+      name: updated.name || formData.name,
+      email: updated.email || formData.email,
+      profilePhoto: updated.profilePhoto || formData.profilePhoto
+    });
+
+    setTimeout(() => setUpdateSuccess(false), 3000);
+  } catch (err) {
+    console.error('Profile update error:', err);
+    setError(err.message || 'Update failed');
+    alert(err.message || 'Update failed');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleCancel = () => {
     setFormData({
@@ -43,6 +129,7 @@ const Profile = () => {
       profilePhoto: currentUser?.profilePhoto || ''
     });
     setIsEditing(false);
+    setError(null);
   };
 
   return (
@@ -56,6 +143,7 @@ const Profile = () => {
           <button 
             onClick={() => setIsEditing(true)} 
             className="btn btn-primary"
+            disabled={loading}
           >
             ✏️ Edit Profile
           </button>
@@ -68,6 +156,16 @@ const Profile = () => {
         </div>
       )}
 
+      {loading && (
+        <div style={{marginBottom: '16px'}}>Loading…</div>
+      )}
+
+      {error && (
+        <div className="alert alert-error" style={{marginBottom: '16px'}}>
+          ⚠️ {error}
+        </div>
+      )}
+
       <div className="profile-container">
         <div className="profile-card card">
           {isEditing ? (
@@ -75,6 +173,7 @@ const Profile = () => {
               <h3 style={{marginBottom: '24px', fontSize: '20px', fontWeight: '600'}}>
                 Edit Your Profile
               </h3>
+
               <form onSubmit={handleSubmit}>
                 <div className="input-group">
                   <label htmlFor="name">Full Name *</label>
@@ -132,13 +231,14 @@ const Profile = () => {
                 )}
 
                 <div style={{display: 'flex', gap: '12px', marginTop: '24px'}}>
-                  <button type="submit" className="btn btn-primary">
+                  <button type="submit" className="btn btn-primary" disabled={loading}>
                     💾 Save Changes
                   </button>
                   <button 
                     type="button" 
                     onClick={handleCancel} 
                     className="btn btn-secondary"
+                    disabled={loading}
                   >
                     ✖️ Cancel
                   </button>
@@ -170,7 +270,7 @@ const Profile = () => {
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">🆔 Membership ID</span>
-                  <span className="detail-value">{currentUser?.membershipId}</span>
+                  <span className="detail-value">{currentUser?.memberId}</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">📅 Year</span>
@@ -218,7 +318,7 @@ const Profile = () => {
                   </div>
                   <div className="id-detail">
                     <span className="id-label">Member ID</span>
-                    <span className="id-value id-number">{currentUser?.membershipId}</span>
+                    <span className="id-value id-number">{currentUser?.memberId}</span>
                   </div>
                   <div className="id-detail">
                     <span className="id-label">Year</span>
@@ -245,9 +345,6 @@ const Profile = () => {
                     <rect x="68" y="0" width="6" height="40" fill="#000"/>
                     <rect x="76" y="0" width="2" height="40" fill="#000"/>
                     <rect x="80" y="0" width="4" height="40" fill="#000"/>
-                    <rect x="86" y="0" width="2" height="40" fill="#000"/>
-                    <rect x="90" y="0" width="6" height="40" fill="#000"/>
-                    <rect x="98" y="0" width="4" height="40" fill="#000"/>
                   </svg>
                 </div>
                 <p className="id-card-note">This card is the property of ACM Club</p>
@@ -265,3 +362,4 @@ const Profile = () => {
 };
 
 export default Profile;
+// ...existing code...

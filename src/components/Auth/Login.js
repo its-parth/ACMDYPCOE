@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import './Login.css';
 
-const Login = () => {
+const Login = () => { 
   const navigate = useNavigate();
   const { login } = useApp();
   const [formData, setFormData] = useState({
@@ -12,6 +12,7 @@ const Login = () => {
     role: 'member'
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -21,7 +22,7 @@ const Login = () => {
     setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!formData.email || !formData.password) {
@@ -29,16 +30,18 @@ const Login = () => {
       return;
     }
 
-    const success = login(formData.email, formData.password, formData.role);
-    
-    if (success) {
+    setLoading(true);
+    const result = await login(formData.email, formData.password, formData.role);
+    setLoading(false);
+
+    if (result.ok) {
       navigate(formData.role === 'admin' ? '/admin' : '/member');
     } else {
-      setError('Invalid credentials. Please try again.');
+      setError(result.error || 'Invalid credentials. Please try again.');
     }
   };
 
-  // Quick login demo credentials
+  // Quick login demo credentials (fills form, still requires backend user to exist)
   const quickLogin = (role) => {
     if (role === 'admin') {
       setFormData({
@@ -53,6 +56,7 @@ const Login = () => {
         role: 'member'
       });
     }
+    setError('');
   };
 
   return (
@@ -109,8 +113,8 @@ const Login = () => {
             />
           </div>
 
-          <button type="submit" className="btn btn-primary login-btn">
-            Sign In
+          <button type="submit" className="btn btn-primary login-btn" disabled={loading}>
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 

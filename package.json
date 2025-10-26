@@ -4,7 +4,9 @@
   "description": "ACM Club Management System - Frontend",
   "private": true,
   "dependencies": {
+    "dotenv": "^17.2.3",
     "html2canvas": "^1.4.1",
+    "mongoose": "^8.19.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.20.0",
