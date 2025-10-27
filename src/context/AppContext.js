@@ -32,62 +32,31 @@ export const AppProvider = ({ children }) => {
     }
   ]);
 
-  const [currentMembers, setCurrentMembers] = useState([
-    {
-      id: 1,
-      name: 'Sarah Johnson',
-      position: 'President',
-      profilePhoto: 'https://ui-avatars.com/api/?name=Sarah+Johnson&background=0066cc&color=fff&size=200',
-      email: 'sarah.j@acm.org',
-      membershipId: 'ACM2025001',
-      year: 2025
-    },
-    {
-      id: 2,
-      name: 'Michael Chen',
-      position: 'Vice President',
-      profilePhoto: 'https://ui-avatars.com/api/?name=Michael+Chen&background=00c896&color=fff&size=200',
-      email: 'michael.c@acm.org',
-      membershipId: 'ACM2025002',
-      year: 2025
-    },
-    {
-      id: 3,
-      name: 'Emily Rodriguez',
-      position: 'Secretary',
-      profilePhoto: 'https://ui-avatars.com/api/?name=Emily+Rodriguez&background=ff6b6b&color=fff&size=200',
-      email: 'emily.r@acm.org',
-      membershipId: 'ACM2025003',
-      year: 2025
-    },
-    {
-      id: 4,
-      name: 'David Kim',
-      position: 'Treasurer',
-      profilePhoto: 'https://ui-avatars.com/api/?name=David+Kim&background=9b59b6&color=fff&size=200',
-      email: 'david.k@acm.org',
-      membershipId: 'ACM2025004',
-      year: 2025
-    },
-    {
-      id: 5,
-      name: 'Priya Patel',
-      position: 'Technical Lead',
-      profilePhoto: 'https://ui-avatars.com/api/?name=Priya+Patel&background=f39c12&color=fff&size=200',
-      email: 'priya.p@acm.org',
-      membershipId: 'ACM2025005',
-      year: 2025
-    },
-    {
-      id: 6,
-      name: 'James Wilson',
-      position: 'Volunteer',
-      profilePhoto: 'https://ui-avatars.com/api/?name=James+Wilson&background=3498db&color=fff&size=200',
-      email: 'james.w@acm.org',
-      membershipId: 'ACM2025006',
-      year: 2025
-    }
-  ]);
+  const [currentMembers, setCurrentMembers] = useState([]);
+  const [currentMembersCnt, setCurrentMembersCnt] = useState(0);
+
+  useEffect(() => {
+    const fetchCurrentMembersCount = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/members', {
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+          }
+        });
+        const data = await res.json();
+        const currentYear = new Date().getFullYear();
+        const currentMembers = data.filter(
+          m => !(m.isPastMember || (m.enrollmentYear || m.year) < currentYear)
+        );
+        setCurrentMembersCnt(currentMembers.length);
+      } catch (err) {
+        console.error('Error fetching member count:', err);
+      }
+    };
+
+    fetchCurrentMembersCount();
+  }, []);
 
   const [pastMembers, setPastMembers] = useState([
     {
@@ -155,6 +124,8 @@ export const AppProvider = ({ children }) => {
           if (evDate >= new Date(today.toDateString())) up.push(ev);
           else past.push(ev);
         });
+
+
         setUpcomingEvents(up);
         setPastEvents(past);
       } catch (err) {
@@ -496,11 +467,13 @@ export const AppProvider = ({ children }) => {
 
   // Update current user profile
   const updateCurrentUser = (updatedData) => {
-    setCurrentUser({
+    const updatedUser = {
       ...currentUser,
       ...updatedData,
       profilePhoto: updatedData.profileImgUrl,
-    });
+    }
+    setCurrentUser(updatedUser);
+    localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
   };
 
   const value = {
@@ -530,6 +503,8 @@ export const AppProvider = ({ children }) => {
     updateGalleryItem,
     deleteGalleryItem,
     activityLogs,
+    currentMembersCnt,
+    setCurrentMembersCnt,
     getAuthHeaders, // exposed for future API calls
   };
 

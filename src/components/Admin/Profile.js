@@ -87,10 +87,24 @@ const AdminProfile = () => {
         id: formData.id,
         name: formData.name,
         email: formData.email,
-        profilePhoto: formData.profilePhoto
+        profilePhoto: formData.profilePhoto,
+        user: currentUser,
       };
-      // use AppContext helper to update current user (backend call)
-      await updateCurrentUser(payload);
+      const res = await fetch('http://localhost:5000/api/users/update', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to update profile');
+      }
+
+      const updated = await res.json();
+      await updateCurrentUser(updated);
       setUpdateSuccess(true);
       setTimeout(() => setUpdateSuccess(false), 2500);
       setIsEditing(false);

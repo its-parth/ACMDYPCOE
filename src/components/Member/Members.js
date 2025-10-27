@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext';
 // import './Members.css';
 
 const Members = () => {
-  const { getAuthHeaders } = useApp();
+  const { getAuthHeaders, setCurrentMembersCnt } = useApp();
   const [members, setMembers] = useState([]);
   const [viewMode, setViewMode] = useState('current'); // 'current' | 'past'
   const [selectedYear, setSelectedYear] = useState('all');

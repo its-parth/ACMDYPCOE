@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
-  const { notifications, currentMembers, upcomingEvents, pastEvents } = useApp();
+  const { notifications, currentMembers, upcomingEvents, pastEvents, currentMembersCnt } = useApp();
 
   return (
     <div className="fade-in">
@@ -15,7 +15,7 @@ const Dashboard = () => {
       <div className="stats-grid">
         <div className="stat-card">
           <div className="stat-icon">👥</div>
-          <div className="stat-value">{currentMembers.length}</div>
+          <div className="stat-value">{currentMembersCnt}</div>
           <div className="stat-label">Active Members</div>
         </div>
 
@@ -66,8 +66,6 @@ const Dashboard = () => {
             Create and organize club events
           </p>
         </Link>
-
-        
       </div>
 
       <div className="section-header" style={{marginTop: '40px'}}>

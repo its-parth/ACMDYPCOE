@@ -2,7 +2,7 @@
 const User = require('../models/User');
 
 exports.updateProfile = async (req, res) => {
-  try {
+  try { 
     const {user} = req.body;
     console.log("trying to update profile");
     console.log(req.body);
@@ -22,7 +22,7 @@ exports.updateProfile = async (req, res) => {
 
     const updated = await User.findByIdAndUpdate(userId, update, { new: true }).select('-password');
     if (!updated) return res.status(404).json({ message: 'User not found' });
-
+    console.log('updated user: ', updated);
     res.json(updated);
   } catch (err) {
     console.error('updateProfile error:', err);
