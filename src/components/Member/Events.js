@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import EventPhotosModal from '../EventPhotosModal';
 
 const Events = () => {
   const { upcomingEvents, pastEvents } = useApp();
   const [viewMode, setViewMode] = useState('upcoming');
+
+  // modal state for members view
+  const [photosModalOpen, setPhotosModalOpen] = useState(false);
+  const [photosModalData, setPhotosModalData] = useState({ photos: [], title: '' });
 
   const displayEvents = viewMode === 'upcoming' ? upcomingEvents : pastEvents;
 
@@ -60,26 +65,40 @@ const Events = () => {
                   </div>
                 )}
 
-                {event.photos && event.photos.length > 0 && (
-                  <div className="event-photos">
-                    <h4>Photos ({event.photos.length})</h4>
-                    <div className="photos-grid">
-                      {event.photos.map((photo, index) => (
-                        <img 
-                          key={index} 
-                          src={photo} 
-                          alt={`Event ${index + 1}`} 
-                          className="event-photo-thumb" 
-                        />
-                      ))}
+                {/* REPLACED photos grid with button */}
+                <div style={{marginTop: 12}}>
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    onClick={() => {
+                      const photoList = event.photos || [];
+                      setPhotosModalData({ photos: photoList, title: event.title });
+                      setPhotosModalOpen(true);
+                    }}
+                    disabled={!(event.photos && event.photos.length > 0)}
+                  >
+                    See event photos {event.photos && event.photos.length ? `(${event.photos.length})` : ''}
+                  </button>
+                  {!event.photos || event.photos.length === 0 ? (
+                    <div style={{marginTop: 8, color: 'var(--text-secondary)', fontSize: 13}}>
+                      No photos for this event
                     </div>
-                  </div>
-                )}
+                  ) : null}
+                </div>
+
+                {/* ...other event markup ... */}
               </div>
             </div>
           ))
         )}
       </div>
+
+      <EventPhotosModal
+        open={photosModalOpen}
+        onClose={() => setPhotosModalOpen(false)}
+        photos={photosModalData.photos}
+        title={photosModalData.title}
+      />
     </div>
   );
 };
