@@ -137,67 +137,89 @@ export const AppProvider = ({ children }) => {
     }
   ]);
 
-  const [upcomingEvents, setUpcomingEvents] = useState([
-    {
-      id: 1,
-      title: 'Web Development Workshop',
-      description: 'Learn React.js and build modern web applications with hands-on projects.',
-      date: '2025-11-05',
-      time: '14:00',
-      poster: 'https://via.placeholder.com/400x250/0066cc/ffffff?text=Web+Dev+Workshop',
-      venue: 'Computer Lab A'
-    },
-    {
-      id: 2,
-      title: 'AI/ML Seminar',
-      description: 'Introduction to Machine Learning and its real-world applications.',
-      date: '2025-11-12',
-      time: '15:30',
-      poster: 'https://via.placeholder.com/400x250/00c896/ffffff?text=AI+ML+Seminar',
-      venue: 'Auditorium'
-    },
-    {
-      id: 3,
-      title: 'Coding Competition',
-      description: 'Test your coding skills in this competitive programming contest.',
-      date: '2025-11-20',
-      time: '10:00',
-      poster: 'https://via.placeholder.com/400x250/ff6b6b/ffffff?text=Coding+Competition',
-      venue: 'Online'
-    }
-  ]);
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
+  const [pastEvents, setPastEvents] = useState([]);
 
-  const [pastEvents, setPastEvents] = useState([
-    {
-      id: 101,
-      title: 'Hackathon 2024',
-      description: 'A 24-hour coding marathon with 150+ participants building innovative solutions.',
-      date: '2024-09-15',
-      photos: [
-        'https://via.placeholder.com/300x200/0066cc/ffffff?text=Hackathon+1',
-        'https://via.placeholder.com/300x200/00c896/ffffff?text=Hackathon+2',
-        'https://via.placeholder.com/300x200/ff6b6b/ffffff?text=Hackathon+3'
-      ]
-    },
-    {
-      id: 102,
-      title: 'Python Workshop',
-      description: 'Beginners workshop on Python programming fundamentals.',
-      date: '2024-08-20',
-      photos: [
-        'https://via.placeholder.com/300x200/9b59b6/ffffff?text=Python+Workshop'
-      ]
-    },
-    {
-      id: 103,
-      title: 'Tech Talk: Cloud Computing',
-      description: 'Industry expert sharing insights on cloud technologies and DevOps.',
-      date: '2024-07-10',
-      photos: [
-        'https://via.placeholder.com/300x200/f39c12/ffffff?text=Tech+Talk'
-      ]
+  // load events from backend on mount
+  useEffect(() => {
+    const loadEvents = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/events');
+        if (!res.ok) throw new Error('Failed to load events');
+        const events = await res.json();
+        const today = new Date();
+        const up = [];
+        const past = [];
+        events.forEach(ev => {
+          const evDate = new Date(ev.date);
+          if (evDate >= new Date(today.toDateString())) up.push(ev);
+          else past.push(ev);
+        });
+        setUpcomingEvents(up);
+        setPastEvents(past);
+      } catch (err) {
+        console.error('loadEvents error:', err);
+      }
+    };
+    loadEvents();
+  }, []);
+
+  // Event CRUD backed by API
+  const addEvent = async (event) => {
+    try {
+      const res = await fetch('http://localhost:5000/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(event)
+      });
+      if (!res.ok) throw new Error('Create event failed');
+      const created = await res.json();
+      const eventDate = new Date(created.date);
+      const today = new Date();
+      if (eventDate >= new Date(today.toDateString())) {
+        setUpcomingEvents(prev => [...prev, created]);
+      } else {
+        setPastEvents(prev => [...prev, created]);
+      }
+      logActivity('Added Event', `Created event: ${created.title}`, 'event');
+    } catch (err) {
+      console.error('addEvent error:', err);
+      alert('Failed to create event');
     }
-  ]);
+  };
+
+  const updateEvent = async (id, updatedData) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/events/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData)
+      });
+      if (!res.ok) throw new Error('Update event failed');
+      const updated = await res.json();
+      // update in upcoming/past arrays (id property provided by backend)
+      setUpcomingEvents(prev => prev.map(e => (String(e.id) === String(id) ? updated : e)));
+      setPastEvents(prev => prev.map(e => (String(e.id) === String(id) ? updated : e)));
+      logActivity('Updated Event', `Updated event: ${updated.title}`, 'event');
+    } catch (err) {
+      console.error('updateEvent error:', err);
+      alert('Failed to update event');
+    }
+  };
+
+  const deleteEvent = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this event?')) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/events/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Delete event failed');
+      setUpcomingEvents(prev => prev.filter(e => String(e.id) !== String(id)));
+      setPastEvents(prev => prev.filter(e => String(e.id) !== String(id)));
+      logActivity('Deleted Event', `Deleted event id: ${id}`, 'event');
+    } catch (err) {
+      console.error('deleteEvent error:', err);
+      alert('Failed to delete event');
+    }
+  };
 
   // New: Feedback data
   const [feedbacks, setFeedbacks] = useState([
@@ -416,43 +438,6 @@ export const AppProvider = ({ children }) => {
     const member = currentMembers.find(m => m.id === id);
     setCurrentMembers(currentMembers.filter(m => m.id !== id));
     logActivity('Deleted Member', `Deleted member: ${member?.name}`, 'member');
-  };
-
-  // Event CRUD
-  const addEvent = (event) => {
-    const newEvent = {
-      ...event,
-      id: Date.now()
-    };
-    const eventDate = new Date(event.date);
-    const today = new Date();
-    
-    if (eventDate > today) {
-      setUpcomingEvents([...upcomingEvents, newEvent]);
-    } else {
-      setPastEvents([newEvent, ...pastEvents]);
-    }
-    logActivity('Created Event', `Created event: ${event.title}`, 'event');
-  };
-
-  const updateEvent = (id, updatedData) => {
-    setUpcomingEvents(upcomingEvents.map(e => 
-      e.id === id ? { ...e, ...updatedData } : e
-    ));
-    setPastEvents(pastEvents.map(e => 
-      e.id === id ? { ...e, ...updatedData } : e
-    ));
-    logActivity('Updated Event', `Updated event: ${updatedData.title}`, 'event');
-  };
-
-  const deleteEvent = (id) => {
-    const upcomingEvent = upcomingEvents.find(e => e.id === id);
-    const pastEvent = pastEvents.find(e => e.id === id);
-    const eventTitle = upcomingEvent?.title || pastEvent?.title;
-    
-    setUpcomingEvents(upcomingEvents.filter(e => e.id !== id));
-    setPastEvents(pastEvents.filter(e => e.id !== id));
-    logActivity('Deleted Event', `Deleted event: ${eventTitle}`, 'event');
   };
 
   // New: Feedback CRUD

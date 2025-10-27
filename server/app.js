@@ -5,6 +5,7 @@ const protectedRoutes = require('./routes/protected');
 const uploadRoutes = require('./routes/upload');
 const cors = require('cors');
 const usersRoutes = require('./routes/users');
+const eventsRoutes = require('./routes/events');
 require('dotenv').config();
 const membersRoutes = require('./routes/members');
 
@@ -20,19 +21,15 @@ mongoose.connect(process.env.DATABASE_URL, {
   useUnifiedTopology: true
 }).then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err));
-// ...existing code...
 
-// after other app.use(...) calls:
-app.use('/api/members', membersRoutes);
-// ...existing code...
 // Routes
+app.use('/api/upload', uploadRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/protected', protectedRoutes);
 app.use('/api/users', usersRoutes);
-// ...after express app created...
-// mouting request for cloudinary - step 1
-app.use('/api/upload', uploadRoutes);
-// ...existing code...
+app.use('/api/events', eventsRoutes);
+app.use('/api/members', membersRoutes);
+
 app.get('/', (req, res) => {
   res.send('ACM Club Backend is running');
 });

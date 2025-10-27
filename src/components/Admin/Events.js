@@ -13,15 +13,80 @@ const Events = () => {
     date: '',
     time: '',
     venue: '',
-    poster: '',
-    photos: ''
+    poster: '',      // poster URL (set after upload)
+    photos: []       // photos URLs array (set after uploads)
   });
+
+  const [uploadingPoster, setUploadingPoster] = useState(false);
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [photoPreviews, setPhotoPreviews] = useState([]); // local previews for UI
 
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+  };
+
+  // upload helper - posts file to backend which uses Cloudinary
+  const uploadFile = async (file) => {
+    if (!file) return null;
+    const fd = new FormData();
+    fd.append('image', file);
+    const res = await fetch('http://localhost:5000/api/upload', {
+      method: 'POST',
+      body: fd
+      // include auth headers here if your upload route requires auth
+    });
+    console.log("trying to upload poster: ", res);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Upload failed');
+    }
+    const data = await res.json();
+    
+    return data.url || data.secure_url || null;
+  };
+
+  const handlePosterFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploadingPoster(true);
+      const url = await uploadFile(file);
+      console.log(url);
+      if (url) {
+        setFormData(prev => ({ ...prev, poster: url }));
+      }
+    } catch (err) {
+      console.error('Poster upload failed', err);
+      alert('Poster upload failed: ' + (err.message || ''));
+    } finally {
+      setUploadingPoster(false);
+    }
+  };
+
+  const handlePhotosFilesChange = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    try {
+      setUploadingPhotos(true);
+      const previews = files.map(f => URL.createObjectURL(f));
+      setPhotoPreviews(previews);
+
+      // upload each file and collect URLs
+      const uploadPromises = files.map(f => uploadFile(f).catch(err => {
+        console.error('Photo upload error for', f.name, err);
+        return null;
+      }));
+      const urls = (await Promise.all(uploadPromises)).filter(Boolean);
+      setFormData(prev => ({ ...prev, photos: [...(prev.photos || []), ...urls] }));
+    } catch (err) {
+      console.error('Photos upload error', err);
+      alert('One or more photo uploads failed');
+    } finally {
+      setUploadingPhotos(false);
+    }
   };
 
   const handleSubmit = (e) => {
@@ -33,8 +98,13 @@ const Events = () => {
     }
 
     const eventData = {
-      ...formData,
-      photos: formData.photos ? formData.photos.split(',').map(url => url.trim()) : []
+      title: formData.title,
+      description: formData.description,
+      date: formData.date,
+      time: formData.time,
+      venue: formData.venue,
+      poster: formData.poster || '',          // already a URL from uploadFile
+      photos: Array.isArray(formData.photos) ? formData.photos : [], // URLs array
     };
 
     if (editingEvent) {
@@ -55,8 +125,9 @@ const Events = () => {
       time: event.time || '',
       venue: event.venue || '',
       poster: event.poster || '',
-      photos: event.photos ? event.photos.join(', ') : ''
+      photos: event.photos || []
     });
+    setPhotoPreviews((event.photos || []).map(p => p));
     setIsFormOpen(true);
   };
 
@@ -74,8 +145,9 @@ const Events = () => {
       time: '',
       venue: '',
       poster: '',
-      photos: ''
+      photos: []
     });
+    setPhotoPreviews([]);
     setEditingEvent(null);
     setIsFormOpen(false);
   };
@@ -169,30 +241,52 @@ const Events = () => {
               </div>
 
               <div className="input-group">
-                <label htmlFor="poster">Poster URL</label>
+                <label htmlFor="poster">Poster (upload)</label>
                 <input
-                  type="url"
                   id="poster"
-                  name="poster"
-                  value={formData.poster}
-                  onChange={handleInputChange}
-                  placeholder="https://example.com/poster.jpg"
+                  name="posterFile"
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePosterFileChange}
                 />
+                <small>Upload a poster image — it will be stored on Cloudinary.</small>
+                {uploadingPoster && <div style={{fontSize: 13, color: 'var(--text-light)'}}>Uploading poster…</div>}
+                {formData.poster && (
+                  <div style={{marginTop: 8}}>
+                    <img src={formData.poster} alt="poster preview" style={{maxWidth: 200, maxHeight: 120}} />
+                    <div style={{marginTop: 6}}>
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => setFormData(prev => ({...prev, poster: ''}))}>Remove Poster</button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="input-group">
-                <label htmlFor="photos">Photo URLs (comma-separated)</label>
-                <textarea
+                <label htmlFor="photos">Photos (upload multiple)</label>
+                <input
                   id="photos"
-                  name="photos"
-                  value={formData.photos}
-                  onChange={handleInputChange}
-                  placeholder="https://example.com/photo1.jpg, https://example.com/photo2.jpg"
-                  rows="3"
+                  name="photosFiles"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handlePhotosFilesChange}
                 />
-                <small style={{color: 'var(--text-light)', fontSize: '12px', marginTop: '4px', display: 'block'}}>
-                  Separate multiple photo URLs with commas
-                </small>
+                <small>Upload one or more photos. Thumbnails will appear below.</small>
+                {uploadingPhotos && <div style={{fontSize: 13, color: 'var(--text-light)'}}>Uploading photos…</div>}
+                <div className="photos-preview" style={{display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap'}}>
+                  {(formData.photos || []).map((url, idx) => (
+                    <div key={idx} style={{position: 'relative'}}>
+                      <img src={url} alt={`photo-${idx}`} style={{width: 100, height: 70, objectFit: 'cover', borderRadius: 4}} />
+                      <button type="button" onClick={() => {
+                        setFormData(prev => ({ ...prev, photos: prev.photos.filter((p,i) => i !== idx) }));
+                        setPhotoPreviews(prev => prev.filter((p,i) => i !== idx));
+                      }} className="btn btn-danger btn-sm" style={{position: 'absolute', top: 4, right: 4}}>✕</button>
+                    </div>
+                  ))}
+                  {photoPreviews.map((p, i) => (
+                    <img key={'preview-'+i} src={p} alt={`preview-${i}`} style={{width:100,height:70,objectFit:'cover',opacity:0.7}} />
+                  ))}
+                </div>
               </div>
 
               <div className="form-actions">
