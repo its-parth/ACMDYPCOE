@@ -6,6 +6,7 @@ import Notifications from './Notifications';
 import Members from './Members';
 import Events from './Events';
 import Calendar from './Calendar';
+import Profile from './Profile';
 
 import './AdminDashboard.css';
 
@@ -16,7 +17,7 @@ const AdminDashboard = () => {
     { path: '/admin/members', label: 'Members', icon: '' },
     { path: '/admin/events', label: 'Events', icon: '' },
     { path: '/admin/calendar', label: 'Calendar', icon: '' },
-    
+    { path: '/admin/profile', label: 'Profile', icon: '' },
   ];
 
   return (
@@ -29,7 +30,7 @@ const AdminDashboard = () => {
           <Route path="members" element={<Members />} />
           <Route path="events" element={<Events />} />
           <Route path="calendar" element={<Calendar />} />
-         
+          <Route path="profile" element={<Profile />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Routes>
       </div>
