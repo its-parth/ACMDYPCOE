@@ -126,18 +126,6 @@ const Notifications = () => {
                 />
               </div>
 
-              <div className="input-group">
-                <label htmlFor="image">Image URL (optional)</label>
-                <input
-                  type="url"
-                  id="image"
-                  name="image"
-                  value={formData.image}
-                  onChange={handleInputChange}
-                  placeholder="https://example.com/image.jpg"
-                />
-              </div>
-
               <div className="form-actions">
                 <button type="button" onClick={resetForm} className="btn btn-secondary">
                   Cancel

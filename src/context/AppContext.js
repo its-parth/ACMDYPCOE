@@ -14,23 +14,98 @@ export const AppProvider = ({ children }) => {
   // Mock initial data
   const [currentUser, setCurrentUser] = useState(null);
   
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      title: 'Welcome to ACM Club',
-      description: 'Join us for exciting tech events and workshops throughout the semester!',
-      date: '2025-10-20',
-      image: null
-    },
-    
-    {
-      id: 2,
-      title: 'Hackathon 2025',
-      description: 'Register now for our annual hackathon. Amazing prizes and learning opportunities await!',
-      date: '2025-10-22',
-      image: null
+  // Replace or update the notifications section with API-backed implementation
+
+  const [notifications, setNotifications] = useState([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [notificationsError, setNotificationsError] = useState(null);
+
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  const TOKEN_KEY = 'acm_token';
+  const USER_KEY = 'acm_user';
+
+  const fetchNotifications = async () => {
+    setNotificationsLoading(true);
+    setNotificationsError(null);
+    try {
+      const res = await fetch(`${API_URL}/api/notifications`, {
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() }
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to load notifications');
+      }
+      const data = await res.json();
+      setNotifications(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('fetchNotifications error:', err);
+      setNotificationsError(err.message || 'Could not load notifications');
+      setNotifications([]);
+    } finally {
+      setNotificationsLoading(false);
     }
-  ]);
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const addNotification = async (notification) => {
+    try {
+      const res = await fetch(`${API_URL}/api/notifications`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify(notification)
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(()=>({}));
+        throw new Error(err.message || 'Create notification failed');
+      }
+      await fetchNotifications();
+      return await res.json();
+    } catch (err) {
+      console.error('addNotification error:', err);
+      throw err;
+    }
+  };
+
+  const updateNotification = async (id, updatedData) => {
+    try {
+      const res = await fetch(`${API_URL}/api/notifications/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify(updatedData)
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(()=>({}));
+        throw new Error(err.message || 'Update notification failed');
+      }
+      await fetchNotifications();
+      return await res.json();
+    } catch (err) {
+      console.error('updateNotification error:', err);
+      throw err;
+    }
+  };
+
+  const deleteNotification = async (id) => {
+    try {
+      const res = await fetch(`${API_URL}/api/notifications/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() }
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(()=>({}));
+        throw new Error(err.message || 'Delete notification failed');
+      }
+      await fetchNotifications();
+      return true;
+    } catch (err) {
+      console.error('deleteNotification error:', err);
+      throw err;
+    }
+  };
 
   const [currentMembers, setCurrentMembers] = useState([]);
   const [currentMembersCnt, setCurrentMembersCnt] = useState(0);
@@ -297,11 +372,6 @@ export const AppProvider = ({ children }) => {
     }
   ]);
 
-  // Backend API base
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-  const TOKEN_KEY = 'acm_token';
-  const USER_KEY = 'acm_user';
-
   // Restore user from localStorage on load
   useEffect(() => {
     try {
@@ -362,29 +432,6 @@ export const AppProvider = ({ children }) => {
   const getAuthHeaders = () => {
     const token = localStorage.getItem(TOKEN_KEY);
     return token ? { Authorization: `Bearer ${token}` } : {};
-  };
-
-  // Notification CRUD
-  const addNotification = (notification) => {
-    const newNotification = {
-      ...notification,
-      id: Date.now()
-    };
-    setNotifications([newNotification, ...notifications]);
-    logActivity('Sent Notification', `Sent notification: ${notification.title}`, 'notification');
-  };
-
-  const updateNotification = (id, updatedData) => {
-    setNotifications(notifications.map(n => 
-      n.id === id ? { ...n, ...updatedData } : n
-    ));
-    logActivity('Updated Notification', `Updated notification: ${updatedData.title}`, 'notification');
-  };
-
-  const deleteNotification = (id) => {
-    const notification = notifications.find(n => n.id === id);
-    setNotifications(notifications.filter(n => n.id !== id));
-    logActivity('Deleted Notification', `Deleted notification: ${notification?.title}`, 'notification');
   };
 
   // Member CRUD
@@ -482,6 +529,9 @@ export const AppProvider = ({ children }) => {
     logout,
     updateCurrentUser,
     notifications,
+    notificationsLoading,
+    notificationsError,
+    fetchNotifications,
     addNotification,
     updateNotification,
     deleteNotification,
@@ -508,5 +558,9 @@ export const AppProvider = ({ children }) => {
     getAuthHeaders, // exposed for future API calls
   };
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return (
+    <AppContext.Provider value={value}>
+      {children}
+    </AppContext.Provider>
+  );
 };

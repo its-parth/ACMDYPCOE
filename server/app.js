@@ -6,6 +6,7 @@ const uploadRoutes = require('./routes/upload');
 const cors = require('cors');
 const usersRoutes = require('./routes/users');
 const eventsRoutes = require('./routes/events');
+const notificationsRoutes = require('./routes/notifications');
 require('dotenv').config();
 const membersRoutes = require('./routes/members');
 
@@ -29,6 +30,7 @@ app.use('/api/protected', protectedRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/events', eventsRoutes);
 app.use('/api/members', membersRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 app.get('/', (req, res) => {
   res.send('ACM Club Backend is running');

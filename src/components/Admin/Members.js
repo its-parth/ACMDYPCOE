@@ -304,11 +304,11 @@ const Members = () => {
                 </div>
               )}
 
-              <div className="input-group">
+              {/* <div className="input-group">
                 <label htmlFor="profileImgUrl">Profile Photo URL (optional)</label>
                 <input id="profileImgUrl" name="profileImgUrl" value={formData.profileImgUrl} onChange={handleInputChange} />
                 <small>Optional URL. Use Cloudinary URL from upload if available.</small>
-              </div>
+              </div> */}
 
               <div className="form-actions">
                 <button type="button" onClick={resetForm} className="btn btn-secondary">Cancel</button>
